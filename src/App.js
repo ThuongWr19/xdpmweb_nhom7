@@ -8,7 +8,7 @@ function App() {
   const [isEditing, setIsEditing] = useState(false);
 
   // Nhớ đổi link này thành link Render khi bạn đưa web lên mạng nhé!
-  const API_URL = 'http://localhost:8000/api/users'; 
+  const API_URL = 'https://xaydungpmweb-nhom7.onrender.com/api/users'; 
 
   // --- HÀM 1: LẤY DỮ LIỆU (READ) ---
   const fetchUsers = () => {
