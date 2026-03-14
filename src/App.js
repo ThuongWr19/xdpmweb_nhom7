@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-function App() {
+function Users() {
   const [users, setUsers] = useState([]);
   const [id, setId] = useState('');
   const [name, setName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
 
-  // Nhớ đổi link này thành link Render khi bạn đưa web lên mạng nhé!
   const API_URL = 'https://xaydungpmweb-nhom7.onrender.com/api/users'; 
 
-  // --- HÀM 1: LẤY DỮ LIỆU (READ) ---
   const fetchUsers = () => {
     fetch(API_URL)
       .then(res => res.json())
@@ -22,7 +21,6 @@ function App() {
     fetchUsers();
   }, []);
 
-  // --- HÀM 2: LƯU DỮ LIỆU (CREATE & UPDATE) ---
   const handleSave = (e) => {
     e.preventDefault();
     if (!id || !name) {
@@ -30,7 +28,6 @@ function App() {
       return;
     }
 
-    // Nếu đang bật chế độ sửa thì gọi PUT, ngược lại gọi POST
     const method = isEditing ? 'PUT' : 'POST';
     const url = isEditing ? `${API_URL}/${id}` : API_URL;
 
@@ -44,23 +41,20 @@ function App() {
         if (!res.ok) throw new Error(data.message);
         alert(data.message);
         
-        // Reset form sau khi lưu thành công
         setId('');
         setName('');
         setIsEditing(false);
-        fetchUsers(); // Tải lại bảng
+        fetchUsers();
       })
       .catch(err => alert(err.message));
   };
 
-  // --- HÀM 3: BẤM NÚT SỬA ---
   const handleEdit = (user) => {
     setId(user.id);
     setName(user.name);
-    setIsEditing(true); // Chuyển form sang chế độ Sửa
+    setIsEditing(true);
   };
 
-  // --- HÀM 4: XÓA DỮ LIỆU (DELETE) ---
   const handleDelete = (deleteId) => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa sinh viên này không?')) return;
 
@@ -69,7 +63,7 @@ function App() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.message);
         alert(data.message);
-        fetchUsers(); // Tải lại bảng sau khi xóa
+        fetchUsers();
       })
       .catch(err => alert(err.message));
   };
@@ -83,7 +77,6 @@ function App() {
             <h5 className="text-secondary">Quản Lý Thí Sinh Dự Thi</h5>
           </div>
 
-          {/* Form Nhập liệu */}
           <div className="card shadow-sm mb-4 border-0">
             <div className="card-body">
               <form onSubmit={handleSave} className="row g-3">
@@ -104,7 +97,6 @@ function App() {
             </div>
           </div>
 
-          {/* Bảng Danh Sách */}
           <div className="card shadow border-0">
             <div className="card-header bg-dark text-white">
               <h5 className="mb-0">Danh Sách Đã Đăng Ký</h5>
@@ -142,10 +134,21 @@ function App() {
               </table>
             </div>
           </div>
-
         </div>
       </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Navigate to="/users" replace />} />
+        
+        <Route path="/users" element={<Users />} />
+      </Routes>
+    </Router>
   );
 }
 
