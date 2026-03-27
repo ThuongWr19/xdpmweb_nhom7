@@ -10,7 +10,7 @@ export default function Login() {
     const handleLogin = (e) => {
         e.preventDefault(); // Chặn hành vi load lại trang của form
         
-        fetch('https://xaydungpmweb-nhom7.onrender.com:80/api/login', {
+        fetch('https://xaydungpmweb-nhom7.onrender.com/api/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
