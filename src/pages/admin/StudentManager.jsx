@@ -24,7 +24,7 @@ export default function StudentManager() {
         }
 
         // Đính kèm token vào Header để gửi cho Laravel xác thực
-        fetch(`http://127.0.0.1:8000/api/users?search=${search}`, {
+        fetch(`https://xaydungpmweb-nhom7.onrender.com/api/users?search=${search}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(response => response.json())
@@ -50,7 +50,7 @@ export default function StudentManager() {
         let method = 'POST';
 
         if (modalMode === 'edit') {
-            url = `http://127.0.0.1:8000/api/users/${editingId}`; // Thêm ID vào url
+            url = `https://xaydungpmweb-nhom7.onrender.com/api/users/${editingId}`; // Thêm ID vào url
             method = 'PUT'; // Dùng phương thức PUT để cập nhật
         }
 
@@ -101,7 +101,7 @@ export default function StudentManager() {
             const token = localStorage.getItem('token');
 
             // Gọi API Xóa của Laravel (phương thức DELETE)
-            fetch(`http://127.0.0.1:8000/api/users/${id}`, {
+            fetch(`https://xaydungpmweb-nhom7.onrender.com/api/users/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             })
@@ -131,7 +131,7 @@ export default function StudentManager() {
         const formDataExcel = new FormData();
         formDataExcel.append('file', file); // Chữ 'file' này phải khớp với request->validate bên Laravel
 
-        fetch('http://127.0.0.1:8000/api/users/import', {
+        fetch('https://xaydungpmweb-nhom7.onrender.com/api/users/import', {
             method: 'POST',
             headers: {
                 // LƯU Ý: Không được đặt Content-Type là json ở đây, trình duyệt sẽ tự xử lý boundaries cho file
