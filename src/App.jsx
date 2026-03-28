@@ -9,6 +9,7 @@ import DoingExam from './pages/student/DoingExam';
 import ReportDashboard from './pages/admin/ReportDashboard';
 import ProctorDashboard from './pages/admin/ProctorDashboard';
 import NotificationManager from './pages/admin/NotificationManager';
+import SystemSettings from './pages/admin/SystemSettings';
 
 const ReportDashboardWrapper = () => {
     const { examId } = useParams();
@@ -36,6 +37,9 @@ function App() {
             <Route path="exams/:examId/report" element={<ReportDashboardWrapper />} />
             <Route path="proctor/:examId" element={<ProctorDashboard />} />
             <Route path="notifications" element={<NotificationManager />} />
+            <Route path="proctoring" element={<ProctorDashboard />} />
+            <Route path="dashboard" element={<ReportDashboard />} />
+            <Route path="settings" element={<SystemSettings />} />
         </Route>
       </Routes>
     </BrowserRouter>

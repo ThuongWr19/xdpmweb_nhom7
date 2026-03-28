@@ -1,7 +1,7 @@
 import { useNavigate, Outlet, Link, useLocation } from 'react-router-dom';
 import './AdminLayout.css'; // Import file CSS vừa tạo
 // Import các icon từ thư viện react-icons
-import { FaChartPie, FaUsers, FaFileAlt, FaUserCircle, FaSignOutAlt, FaCog, FaListAlt } from 'react-icons/fa';
+import { FaEye, FaChartPie, FaUsers, FaFileAlt, FaUserCircle, FaSignOutAlt, FaCog, FaListAlt } from 'react-icons/fa';
 
 export default function AdminLayout() {
     const navigate = useNavigate();
@@ -18,9 +18,10 @@ export default function AdminLayout() {
         { path: '/admin/dashboard', name: 'Thống kê', icon: <FaChartPie className="sidebar-icon" /> },
         { path: '/admin/students', name: 'Quản lý sinh viên', icon: <FaUsers className="sidebar-icon" /> },
         { path: '/admin/exams', name: 'Quản lý Kỳ thi', icon: <FaListAlt className="sidebar-icon" /> },
-        { path: '/admin/settings', name: 'Cài đặt hệ thống', icon: <FaCog className="sidebar-icon" /> },
+        // { path: '/admin/settings', name: 'Cài đặt hệ thống', icon: <FaCog className="sidebar-icon" /> },
         { path: '/admin/questions', name: 'Ngân hàng câu hỏi', icon: <FaFileAlt className="sidebar-icon" /> },
         { path: '/admin/notifications', name: 'Quản lý thông báo', icon: <FaFileAlt className="sidebar-icon" /> },
+        { path: '/admin/proctoring', name: 'Giám sát phòng thi', icon: <FaEye className="sidebar-icon" /> },
         
     ];
 

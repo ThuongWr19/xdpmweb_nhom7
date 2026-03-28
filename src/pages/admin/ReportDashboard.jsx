@@ -1,129 +1,99 @@
-import React, { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, ResponsiveContainer } from 'recharts';
+import { FaUsers, FaFileAlt, FaQuestionCircle, FaHistory, FaCheckCircle, FaBan } from 'react-icons/fa';
 
-const ReportDashboard = ({ examId }) => {
+export default function ReportDashboard() {
     const [stats, setStats] = useState(null);
     const API_URL = import.meta.env.VITE_API_URL;
+    const token = localStorage.getItem('token');
+
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                // 1. Lấy token từ localStorage
-                const token = localStorage.getItem('token'); 
-
-                const response = await axios.get(`${API_URL}/exams/${examId}/statistics`, {
-                    headers: {
-                        // 2. Thêm header Authorization
-                        'Authorization': `Bearer ${token}` 
-                    }
+                const res = await axios.get(`${API_URL}/admin/dashboard/statistics`, {
+                    headers: { Authorization: `Bearer ${token}` }
                 });
-                
-                setStats(response.data);
+                setStats(res.data);
             } catch (error) {
-                if (error.response && error.response.status === 401) {
-                    console.error("Lỗi 401: Bạn không có quyền truy cập hoặc phiên đăng nhập hết hạn.");
-                    // Có thể điều hướng người dùng về trang login ở đây
-                } else {
-                    console.error("Lỗi kết nối API:", error);
-                }
-                console.error("Nội dung lỗi từ Server:", error.response?.data);
-                console.error("Mã lỗi:", error.response?.status);
+                console.error('Lỗi lấy dữ liệu thống kê:', error);
             }
         };
         fetchStats();
-    }, [examId]);
+    }, [API_URL, token]);
 
-    const handleExport = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            const response = await axios.get(`${API_URL}/exams/${examId}/export`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-                responseType: 'blob', // Quan trọng: Để nhận file nhị phân
-            });
+    if (!stats) return <div className="text-center mt-5"><div className="spinner-border text-primary"></div></div>;
 
-            // Tạo đường dẫn tạm thời để tải file
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `BaoCao_KỳThi_${examId}.xlsx`); // Tên file
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-        } catch (error) {
-            if (error.response && error.response.data instanceof Blob) {
-            // Đọc nội dung lỗi thực sự từ Backend gửi về
-            const reader = new FileReader();
-            reader.onload = () => {
-                console.error("LỖI CHI TIẾT TỪ BACKEND:", reader.result);
-                alert("Lỗi Backend: " + reader.result);
-            };
-            reader.readAsText(error.response.data);
-        }
-        }
-    };
-
-    if (!stats) return <p>Đang tải dữ liệu thống kê...</p>;
-    console.log("Dữ liệu API:", stats);
-    // Dữ liệu cho PieChart (Đậu/Rớt)
-    const pieData = [
-        { name: 'Đậu', value: stats?.passed || 0 },
-        { name: 'Rớt', value: stats?.failed || 0 },
-    ];
-    const COLORS = ['#4CAF50', '#F44336'];
-
-    // Dữ liệu cho BarChart (Phổ điểm)
-    const barData = [
-        { name: '0-3 Điểm', count: stats?.distribution?.['0-3'] || 0 },
-        { name: '4-6 Điểm', count: stats?.distribution?.['4-6'] || 0 },
-        { name: '7-8 Điểm', count: stats?.distribution?.['7-8'] || 0 },
-        { name: '9-10 Điểm', count: stats?.distribution?.['9-10'] || 0 },
+    const statCards = [
+        { title: 'Tổng Sinh Viên', value: stats.total_students, icon: <FaUsers size={30} />, color: 'primary' },
+        { title: 'Tổng Kỳ Thi', value: stats.total_exams, icon: <FaFileAlt size={30} />, color: 'success' },
+        { title: 'Ngân Hàng Câu Hỏi', value: stats.total_questions, icon: <FaQuestionCircle size={30} />, color: 'warning' },
+        { title: 'Lượt Làm Bài', value: stats.total_attempts, icon: <FaHistory size={30} />, color: 'info' }
     ];
 
     return (
-        <div className="p-6 bg-gray-50 min-h-screen">
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-800">Báo Cáo Thống Kê</h2>
-                <button onClick={handleExport} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-                    Xuất Excel
-                </button>
+        <div className="container-fluid py-4">
+            <h3 className="fw-bold mb-4 text-dark">Thống Kê Tổng Quan</h3>
+            
+            {/* 4 Thẻ Thống Kê */}
+            <div className="row g-4 mb-5">
+                {statCards.map((card, idx) => (
+                    <div className="col-md-6 col-xl-3" key={idx}>
+                        <div className="card shadow-sm border-0 h-100" style={{ borderRadius: '12px' }}>
+                            <div className="card-body p-4 d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h6 className="text-muted fw-bold mb-2">{card.title}</h6>
+                                    <h2 className="fw-bold mb-0 text-dark">{card.value}</h2>
+                                </div>
+                                <div className={`bg-${card.color} bg-opacity-10 text-${card.color} p-3 rounded-circle d-flex align-items-center justify-content-center`}>
+                                    {card.icon}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ))}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Biểu đồ tròn - Tỉ lệ Đậu/Rớt */}
-                <div className="bg-white p-4 shadow rounded">
-                    <h3 className="text-lg font-semibold text-center mb-4">Tỉ Lệ Đậu / Rớt</h3>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <PieChart>
-                            <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
-                                {pieData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
-                            </Pie>
-                            <Tooltip />
-                            <Legend />
-                        </PieChart>
-                    </ResponsiveContainer>
-                    <p className="text-center mt-2">Tổng số bài nộp: {stats.total_students}</p>
+            {/* Bảng hoạt động gần đây */}
+            <div className="card shadow-sm border-0" style={{ borderRadius: '12px' }}>
+                <div className="card-header bg-white py-3 border-0">
+                    <h5 className="mb-0 fw-bold">Hoạt Động Nộp Bài Gần Đây</h5>
                 </div>
-
-                {/* Biểu đồ cột - Phổ điểm */}
-                <div className="bg-white p-4 shadow rounded">
-                    <h3 className="text-lg font-semibold text-center mb-4">Phổ Điểm Sinh Viên</h3>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={barData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" />
-                            <YAxis allowDecimals={false} />
-                            <Tooltip />
-                            <Bar dataKey="count" fill="#3B82F6" name="Số lượng sinh viên" />
-                        </BarChart>
-                    </ResponsiveContainer>
+                <div className="table-responsive">
+                    <table className="table table-hover align-middle mb-0">
+                        <thead className="table-light">
+                            <tr>
+                                <th className="px-4 py-3">Sinh viên</th>
+                                <th className="py-3">Kỳ thi</th>
+                                <th className="py-3">Trạng thái</th>
+                                <th className="py-3">Điểm số</th>
+                                <th className="py-3">Thời gian</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {stats.recent_attempts.length === 0 ? (
+                                <tr><td colSpan="5" className="text-center py-4 text-muted">Chưa có hoạt động nào.</td></tr>
+                            ) : (
+                                stats.recent_attempts.map(attempt => (
+                                    <tr key={attempt.id}>
+                                        <td className="px-4 py-3">
+                                            <div className="fw-bold text-dark">{attempt.user?.name}</div>
+                                            <div className="small text-muted">{attempt.user?.class || 'N/A'}</div>
+                                        </td>
+                                        <td className="fw-medium">{attempt.exam?.title}</td>
+                                        <td>
+                                            {attempt.status === 'completed' ? <span className="badge bg-success"><FaCheckCircle className="me-1"/>Hoàn thành</span> :
+                                             attempt.status === 'forced_submitted' ? <span className="badge bg-danger"><FaBan className="me-1"/>Bị đình chỉ</span> :
+                                             <span className="badge bg-primary">Đang thi</span>}
+                                        </td>
+                                        <td className="fw-bold text-primary">{attempt.score !== null ? `${attempt.score}/10` : '-'}</td>
+                                        <td className="text-muted small">{new Date(attempt.created_at).toLocaleString('vi-VN')}</td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     );
-};
-
-export default ReportDashboard;
+}
