@@ -5,6 +5,9 @@ import StudentHome from './pages/student/StudentHome';
 import AdminLayout from './layouts/AdminLayout';
 import QuestionManager from './pages/admin/QuestionManager';
 import ExamManager from './pages/admin/ExamManager';
+import DoingExam from './pages/student/DoingExam';
+
+
 function App() {
   return (
     <BrowserRouter>
@@ -14,6 +17,8 @@ function App() {
 
         {/* --- KHU VỰC CỦA SINH VIÊN --- */}
         <Route path="/student" element={<StudentHome />} />
+        <Route path="/student/exam/:id/do" element={<DoingExam />} />
+        <Route path="/student/home" element={<StudentHome />} />
 
         {/* --- KHU VỰC CỦA ADMIN/CTSV --- */}
         <Route path="/admin" element={<AdminLayout />}>
