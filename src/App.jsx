@@ -4,6 +4,7 @@ import StudentManager from './pages/admin/StudentManager';
 import StudentHome from './pages/student/StudentHome';
 import AdminLayout from './layouts/AdminLayout';
 import QuestionManager from './pages/admin/QuestionManager';
+import ExamManager from './pages/admin/ExamManager';
 function App() {
   return (
     <BrowserRouter>
@@ -17,7 +18,8 @@ function App() {
         {/* --- KHU VỰC CỦA ADMIN/CTSV --- */}
         <Route path="/admin" element={<AdminLayout />}>
             <Route path="students" element={<StudentManager />} />
-            <Route path="questions" element={<QuestionManager />} /> {/* Thêm dòng này */}
+            <Route path="questions" element={<QuestionManager />} /> 
+            <Route path="exams" element={<ExamManager />} />
         </Route>
       </Routes>
     </BrowserRouter>
