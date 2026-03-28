@@ -29,8 +29,22 @@ export default function StudentHome() {
             navigate('/login');
             return;
         }
+
+        const fetchNotices = async () => {
+            try {
+                const response = await axios.get('/api/notifications'); 
+                setNotifications(response.data);
+            } catch (error) {
+                console.error("Lỗi lấy thông báo", error);
+            }
+        };
+        fetchNotices();
         fetchData();
     }, []);
+
+    const handleStartExam = (attemptId) => {
+        navigate(`/student/exam/${attemptId}`);
+    };
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -129,6 +143,20 @@ export default function StudentHome() {
             </nav>
 
             <div className="container pb-5">
+
+                {notifications.length > 0 && (
+                    <div className="alert alert-info shadow-sm mb-5">
+                        <h4 className="alert-heading text-primary"><i className="bi bi-megaphone-fill"></i> Bảng Tin CTSV</h4>
+                        <hr />
+                        {notifications.map((noti, index) => (
+                            <div key={noti.id} className="mb-3">
+                                <h5 className="mb-1 text-dark">{noti.title}</h5>
+                                <p className="mb-0 text-dark" style={{ whiteSpace: 'pre-wrap' }}>{noti.content}</p>
+                                {index !== notifications.length - 1 && <hr className="my-3 border-info" />}
+                            </div>
+                        ))}
+                    </div>
+                )}
                 {/* Tabs Điều hướng */}
                 <div className="row mb-4">
                     <div className="col-12 text-center">

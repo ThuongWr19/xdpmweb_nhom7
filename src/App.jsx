@@ -7,6 +7,8 @@ import QuestionManager from './pages/admin/QuestionManager';
 import ExamManager from './pages/admin/ExamManager';
 import DoingExam from './pages/student/DoingExam';
 import ReportDashboard from './pages/admin/ReportDashboard';
+import ProctorDashboard from './pages/admin/ProctorDashboard';
+import NotificationManager from './pages/admin/NotificationManager';
 
 const ReportDashboardWrapper = () => {
     const { examId } = useParams();
@@ -32,6 +34,8 @@ function App() {
             <Route path="exams" element={<ExamManager />} />
             {/* Đặt Route báo cáo thống kê vào đây để dùng chung layout Admin */}
             <Route path="exams/:examId/report" element={<ReportDashboardWrapper />} />
+            <Route path="proctor/:examId" element={<ProctorDashboard />} />
+            <Route path="notifications" element={<NotificationManager />} />
         </Route>
       </Routes>
     </BrowserRouter>

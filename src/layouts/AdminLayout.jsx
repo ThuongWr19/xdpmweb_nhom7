@@ -20,6 +20,7 @@ export default function AdminLayout() {
         { path: '/admin/exams', name: 'Quản lý Kỳ thi', icon: <FaListAlt className="sidebar-icon" /> },
         { path: '/admin/settings', name: 'Cài đặt hệ thống', icon: <FaCog className="sidebar-icon" /> },
         { path: '/admin/questions', name: 'Ngân hàng câu hỏi', icon: <FaFileAlt className="sidebar-icon" /> },
+        { path: '/admin/notifications', name: 'Quản lý thông báo', icon: <FaFileAlt className="sidebar-icon" /> },
         
     ];
 

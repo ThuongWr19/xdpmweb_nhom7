@@ -5,7 +5,8 @@ import axios from 'axios';
 export default function DoingExam() {
     const { id } = useParams(); // Lấy ID kỳ thi từ URL
     const navigate = useNavigate();
-    
+    const { attemptId } = useParams();
+    const [cheatCount, setCheatCount] = useState(0);
     const [exam, setExam] = useState(null);
     const [questions, setQuestions] = useState([]);
     const [answers, setAnswers] = useState({});
@@ -57,6 +58,47 @@ export default function DoingExam() {
         }
         return () => clearInterval(timerRef.current);
     }, [timeLeft]);
+
+    useEffect(() => {
+        // Hàm xử lý khi sinh viên chuyển Tab hoặc thu nhỏ cửa sổ
+        const handleVisibilityChange = async () => {
+            if (document.hidden) {
+                alert("CẢNH BÁO: Bạn vừa rời khỏi màn hình làm bài! Hành vi này đã được ghi nhận.");
+                try {
+                    const res = await axios.post(`/api/exam-attempts/${attemptId}/log-violation`);
+                    setCheatCount(res.data.cheat_count);
+                    
+                    // Nếu Backend trả về cờ forced (đã vi phạm quá số lần cho phép)
+                    if (res.data.forced) {
+                        alert("BẠN ĐÃ VI PHẠM QUY CHẾ QUÁ NHIỀU LẦN. HỆ THỐNG ĐÃ TỰ ĐỘNG THU BÀI!");
+                        navigate('/student/home'); // Chuyển hướng về trang chủ
+                    }
+                } catch (error) {
+                    console.error("Lỗi khi ghi nhận vi phạm", error);
+                }
+            }
+        };
+
+        // Hàm chặn Copy/Paste và Chuột phải
+        const handlePreventCheating = (e) => {
+            e.preventDefault();
+            alert("Hành động này không được phép trong phòng thi!");
+        };
+
+        // Đăng ký Event Listeners
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+        window.addEventListener("copy", handlePreventCheating);
+        window.addEventListener("paste", handlePreventCheating);
+        window.addEventListener("contextmenu", handlePreventCheating); // Chặn click chuột phải
+
+        // Dọn dẹp Event Listeners khi component unmount (sinh viên nộp bài xong)
+        return () => {
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+            window.removeEventListener("copy", handlePreventCheating);
+            window.removeEventListener("paste", handlePreventCheating);
+            window.removeEventListener("contextmenu", handlePreventCheating);
+        };
+    }, [attemptId, navigate]);
 
     // Xử lý chọn đáp án và Auto-save (Lưu nháp)
     const handleSelectAnswer = (questionId, option) => {
@@ -148,6 +190,9 @@ export default function DoingExam() {
                         <div className="card-body">
                             <h4 className="fw-bold text-primary mb-0">{exam?.title}</h4>
                             <p className="text-muted mb-0">Môn thi: {exam?.subject} | Tổng số: {questions.length} câu</p>
+                            {cheatCount > 0 && (
+                                <span className="badge bg-danger fs-6">Số lần cảnh báo vi phạm: {cheatCount}</span>
+                            )}
                         </div>
                     </div>
 
