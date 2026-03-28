@@ -8,11 +8,15 @@ export default function Login() {
     const navigate = useNavigate();
 
     const handleLogin = (e) => {
-        e.preventDefault(); // Chặn hành vi load lại trang của form
+        e.preventDefault(); 
         
-        fetch('https://xaydungpmweb-nhom7.onrender.com/api/login', {
+        // Sử dụng biến môi trường ở đây
+        fetch(`${import.meta.env.VITE_API_URL}/login`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json' 
+            },
             body: JSON.stringify({ email, password })
         })
         .then(response => response.json())

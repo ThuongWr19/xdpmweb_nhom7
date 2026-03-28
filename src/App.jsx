@@ -3,7 +3,7 @@ import Login from './pages/auth/Login';
 import StudentManager from './pages/admin/StudentManager';
 import StudentHome from './pages/student/StudentHome';
 import AdminLayout from './layouts/AdminLayout';
-
+import QuestionManager from './pages/admin/QuestionManager';
 function App() {
   return (
     <BrowserRouter>
@@ -16,8 +16,8 @@ function App() {
 
         {/* --- KHU VỰC CỦA ADMIN/CTSV --- */}
         <Route path="/admin" element={<AdminLayout />}>
-            {/* Khi vào /admin/students thì nó sẽ nhét StudentManager vào phần Outlet của AdminLayout */}
             <Route path="students" element={<StudentManager />} />
+            <Route path="questions" element={<QuestionManager />} /> {/* Thêm dòng này */}
         </Route>
       </Routes>
     </BrowserRouter>

@@ -24,7 +24,7 @@ export default function StudentManager() {
         }
 
         // Đính kèm token vào Header để gửi cho Laravel xác thực
-        fetch(`https://xaydungpmweb-nhom7.onrender.com/api/users?search=${search}`, {
+        fetch(`${import.meta.env.VITE_API_URL}/users?search=${search}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(response => response.json())
@@ -46,12 +46,12 @@ export default function StudentManager() {
         const token = localStorage.getItem('token');
 
         // Xác định URL API và phương thức dựa trên chế độ modalMode
-        let url = 'https://xaydungpmweb-nhom7.onrender.com//api/users';
+        let url = `${import.meta.env.VITE_API_URL}/users`;
         let method = 'POST';
 
         if (modalMode === 'edit') {
-            url = `https://xaydungpmweb-nhom7.onrender.com/api/users/${editingId}`; // Thêm ID vào url
-            method = 'PUT'; // Dùng phương thức PUT để cập nhật
+            url = `${import.meta.env.VITE_API_URL}/users/${editingId}`; 
+            method = 'PUT';
         }
 
         fetch(url, {
@@ -101,7 +101,7 @@ export default function StudentManager() {
             const token = localStorage.getItem('token');
 
             // Gọi API Xóa của Laravel (phương thức DELETE)
-            fetch(`https://xaydungpmweb-nhom7.onrender.com/api/users/${id}`, {
+            fetch(`${import.meta.env.VITE_API_URL}/users/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             })
@@ -131,7 +131,7 @@ export default function StudentManager() {
         const formDataExcel = new FormData();
         formDataExcel.append('file', file); // Chữ 'file' này phải khớp với request->validate bên Laravel
 
-        fetch('https://xaydungpmweb-nhom7.onrender.com/api/users/import', {
+        fetch(`${import.meta.env.VITE_API_URL}/users/import`, {
             method: 'POST',
             headers: {
                 // LƯU Ý: Không được đặt Content-Type là json ở đây, trình duyệt sẽ tự xử lý boundaries cho file
