@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import Login from './pages/auth/Login';
 import StudentManager from './pages/admin/StudentManager';
 import StudentHome from './pages/student/StudentHome';
@@ -6,7 +6,12 @@ import AdminLayout from './layouts/AdminLayout';
 import QuestionManager from './pages/admin/QuestionManager';
 import ExamManager from './pages/admin/ExamManager';
 import DoingExam from './pages/student/DoingExam';
+import ReportDashboard from './pages/admin/ReportDashboard';
 
+const ReportDashboardWrapper = () => {
+    const { examId } = useParams();
+    return <ReportDashboard examId={examId} />;
+};
 
 function App() {
   return (
@@ -25,6 +30,8 @@ function App() {
             <Route path="students" element={<StudentManager />} />
             <Route path="questions" element={<QuestionManager />} /> 
             <Route path="exams" element={<ExamManager />} />
+            {/* Đặt Route báo cáo thống kê vào đây để dùng chung layout Admin */}
+            <Route path="exams/:examId/report" element={<ReportDashboardWrapper />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaClock, FaCheckCircle, FaExclamationCircle } from 'react-icons/fa';
-
+import axios from 'axios';
 export default function DoingExam() {
     const { id } = useParams(); // Lấy ID kỳ thi từ URL
     const navigate = useNavigate();
@@ -11,6 +11,7 @@ export default function DoingExam() {
     const [answers, setAnswers] = useState({});
     const [timeLeft, setTimeLeft] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [result, setResult] = useState(null);
     
     const API_URL = import.meta.env.VITE_API_URL;
     const token = localStorage.getItem('token');
@@ -78,14 +79,50 @@ export default function DoingExam() {
         handleSubmit();
     };
 
-    const handleSubmit = () => {
-        if (timeLeft > 0 && !window.confirm('Bạn có chắc chắn muốn nộp bài sớm không?')) return;
-        
-        // Đoạn này sau này bạn sẽ gọi API chấm điểm nộp bài thật.
-        // Tạm thời hiển thị alert và quay về trang chủ
-        alert('Đã lưu bài làm cuối cùng. Nộp bài thành công!');
-        navigate('/student/home'); 
+    const handleSubmit = async () => {
+        try {
+            const response = await axios.post(
+                `${API_URL}/exams/${id}/submit`,
+                { answers },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    }
+                }
+            );
+            setResult(response.data); // Lưu kết quả trả về từ API
+        } catch (error) {
+            console.error("Lỗi khi nộp bài", error);
+        }
     };
+
+    if (result) {
+        return (
+            <div className="result-container p-6 bg-white rounded shadow-md">
+                <h2 className="text-2xl font-bold mb-4 text-center">Kết Quả Bài Thi</h2>
+                <div className="text-center mb-6">
+                    <p className="text-xl">Điểm số: <span className="font-bold text-blue-600">{result.score} / 10</span></p>
+                    <p>Số câu đúng: {result.correct_count} / {result.total_questions}</p>
+                </div>
+                
+                <h3 className="text-lg font-bold mb-3">Chi tiết:</h3>
+                <div className="space-y-4">
+                    {result.details.map((item, index) => (
+                        <div key={item.question_id} className={`p-4 border rounded ${item.is_correct ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                            <p className="font-semibold">Câu {index + 1}: {item.question_text}</p>
+                            <p className="text-sm mt-2">
+                                Bạn chọn: <span className={item.is_correct ? 'text-green-600' : 'text-red-600'}>{item.user_answer || 'Chưa chọn'}</span>
+                            </p>
+                            {!item.is_correct && (
+                                <p className="text-sm text-green-600 font-semibold">Đáp án đúng: {item.correct_answer}</p>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
 
     // Format thời gian hiển thị (MM:SS)
     const formatTime = (seconds) => {
@@ -190,9 +227,10 @@ export default function DoingExam() {
                                 <div><FaExclamationCircle className="text-secondary me-1"/> Chưa làm: {questions.length - Object.keys(answers).length}</div>
                             </div>
 
-                            <button className="btn btn-primary w-100 fw-bold py-2" onClick={handleSubmit}>
-                                NỘP BÀI THI
-                            </button>
+                            <div>
+                                {/* Form chọn đáp án và nút nộp bài */}
+                                <button onClick={handleSubmit} className="bg-blue-500 text-white px-4 py-2 rounded mt-4">Nộp bài</button>
+                            </div>
                         </div>
                     </div>
                 </div>

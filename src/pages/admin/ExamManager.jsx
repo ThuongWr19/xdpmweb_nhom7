@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FaPlus, FaRandom, FaPlay, FaPause, FaEdit, FaTrash, FaClock, FaBook } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 export default function ExamManager() {
     const [exams, setExams] = useState([]);
@@ -7,6 +8,7 @@ export default function ExamManager() {
     const [modalMode, setModalMode] = useState('add');
     const [editingId, setEditingId] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const navigate = useNavigate();
     
     const [formData, setFormData] = useState({
         title: '', subject: '', duration: 60, total_questions: 40, start_time: '', end_time: '', password: ''
@@ -182,6 +184,15 @@ export default function ExamManager() {
                                             <button className="btn btn-outline-warning" title="Sửa" onClick={() => openModal('edit', exam)}><FaEdit /></button>
                                             <button className="btn btn-outline-danger" title="Xóa" onClick={() => deleteExam(exam.id)}><FaTrash /></button>
                                         </div>
+                                    </td>
+                                    <td>
+                                        {/* Các nút Sửa/Xóa hiện tại */}
+                                        <button 
+                                            onClick={() => navigate(`/admin/exams/${exam.id}/report`)}
+                                            className="bg-purple-500 text-white px-3 py-1 rounded ml-2 hover:bg-purple-600"
+                                        >
+                                            Xem Thống Kê
+                                        </button>
                                     </td>
                                 </tr>
                             ))}
