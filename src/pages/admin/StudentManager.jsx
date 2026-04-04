@@ -1,29 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 
 export default function StudentManager() {
     const [users, setUsers] = useState([]);
     const [search, setSearch] = useState('');
     const navigate = useNavigate();
-    // State điều khiển ẩn/hiện Modal
+    
     const [showModal, setShowModal] = useState(false);
-
-    // State chứa dữ liệu người dùng nhập vào form
     const [formData, setFormData] = useState({ name: '', email: '', phone: '', class: '' });
-    // State xác định chế độ Modal: 'add' (Thêm) hoặc 'edit' (Sửa)
     const [modalMode, setModalMode] = useState('add');
-
-    // State lưu ID của sinh viên đang được chọn để sửa
     const [editingId, setEditingId] = useState(null);
-    // Hàm lấy danh sách sinh viên
+
     const fetchUsers = () => {
         const token = localStorage.getItem('token');
         if (!token) {
-            navigate('/login'); // Nếu chưa có thẻ từ thì đuổi về trang login
+            navigate('/login');
             return;
         }
 
-        // Đính kèm token vào Header để gửi cho Laravel xác thực
         fetch(`${import.meta.env.VITE_API_URL}/users?search=${search}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
@@ -31,21 +26,13 @@ export default function StudentManager() {
             .then(data => setUsers(data));
     };
 
-    // Chạy fetchUsers mỗi khi từ khóa tìm kiếm thay đổi
     useEffect(() => {
         fetchUsers();
     }, [search]);
 
-    const handleLogout = () => {
-        localStorage.removeItem('token'); // Xóa thẻ từ
-        navigate('/login');
-    };
-    // Hàm xử lý khi bấm nút "Lưu Sinh Viên" trên form Modal
     const handleSubmit = (e) => {
-        e.preventDefault(); // Chặn load lại trang
+        e.preventDefault(); 
         const token = localStorage.getItem('token');
-
-        // Xác định URL API và phương thức dựa trên chế độ modalMode
         let url = `${import.meta.env.VITE_API_URL}/users`;
         let method = 'POST';
 
@@ -66,26 +53,23 @@ export default function StudentManager() {
             .then(data => {
                 if (data.student) {
                     if (modalMode === 'add') {
-                        // Chế độ thêm: nhét người mới vào đầu danh sách
                         setUsers([data.student, ...users]);
-                        alert('Thêm sinh viên thành công!');
+                        Swal.fire('Thành công!', 'Thêm sinh viên thành công!', 'success');
                     } else {
-                        // Chế độ sửa: cập nhật lại dữ liệu của người đó trong mảng users
                         setUsers(users.map(u => u.id === editingId ? data.student : u));
-                        alert('Cập nhật thông tin thành công!');
+                        Swal.fire('Thành công!', 'Cập nhật thông tin thành công!', 'success');
                     }
-                    setShowModal(false); // Đóng Modal
+                    setShowModal(false);
                 } else {
-                    alert('Lỗi: Email đã tồn tại hoặc nhập sai định dạng!');
+                    Swal.fire('Lỗi!', 'Email đã tồn tại hoặc nhập sai định dạng!', 'error');
                 }
             })
             .catch(error => console.error("Lỗi:", error));
     };
-    // Hàm xử lý khi bấm nút "Sửa" ở trên bảng
+
     const handleEditClick = (user) => {
         setModalMode('edit');
         setEditingId(user.id);
-        // Thêm user.class vào đây:
         setFormData({
             name: user.name,
             email: user.email,
@@ -94,142 +78,147 @@ export default function StudentManager() {
         });
         setShowModal(true);
     };
-    // Hàm xử lý khi bấm nút Xóa
-    const handleDelete = (id) => {
-        // Hiện hộp thoại hỏi lại cho chắc chắn
-        if (window.confirm('Bạn có thực sự muốn xóa sinh viên này không?')) {
-            const token = localStorage.getItem('token');
 
-            // Gọi API Xóa của Laravel (phương thức DELETE)
+    const handleDelete = async (id) => {
+        const confirm = await Swal.fire({
+            title: 'Xóa sinh viên?',
+            text: "Bạn có thực sự muốn xóa sinh viên này không?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: 'Đồng ý xóa',
+            cancelButtonText: 'Hủy'
+        });
+
+        if (confirm.isConfirmed) {
+            const token = localStorage.getItem('token');
             fetch(`${import.meta.env.VITE_API_URL}/users/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             })
                 .then(response => response.json())
-                .then(data => {
-                    // Xóa thành công thì lọc (filter) bỏ người dùng đó khỏi giao diện ngay lập tức
+                .then(() => {
                     setUsers(users.filter(user => user.id !== id));
-                    alert('Đã xóa sinh viên thành công!');
+                    Swal.fire('Đã xóa!', 'Sinh viên đã được xóa khỏi hệ thống.', 'success');
                 })
                 .catch(error => console.error("Lỗi khi xóa:", error));
         }
     };
-    // Hàm xử lý khi chọn file Excel
-    const handleImportExcel = (e) => {
-        const file = e.target.files[0]; // Lấy file đầu tiên người dùng chọn
+
+    const handleImportExcel = async (e) => {
+        const file = e.target.files[0];
         if (!file) return;
 
-        // Hiện hộp thoại xác nhận cho chắc
-        if (!window.confirm(`Bạn có chắc muốn import danh sách sinh viên từ file ${file.name} không?`)) {
-            e.target.value = null; // Reset ô input file
+        const confirm = await Swal.fire({
+            title: 'Tải lên Excel?',
+            text: `Xác nhận import danh sách sinh viên từ file ${file.name}?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: 'Có, tải lên',
+            cancelButtonText: 'Hủy'
+        });
+
+        if (!confirm.isConfirmed) {
+            e.target.value = null;
             return;
         }
 
         const token = localStorage.getItem('token');
-
-        // --- QUAN TRỌNG: Tạo FormData để chứa file gửi đi ---
         const formDataExcel = new FormData();
-        formDataExcel.append('file', file); // Chữ 'file' này phải khớp với request->validate bên Laravel
+        formDataExcel.append('file', file);
 
         fetch(`${import.meta.env.VITE_API_URL}/users/import`, {
             method: 'POST',
-            headers: {
-                // LƯU Ý: Không được đặt Content-Type là json ở đây, trình duyệt sẽ tự xử lý boundaries cho file
-                'Authorization': `Bearer ${token}`
-            },
-            body: formDataExcel // Gửi FormData đi
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formDataExcel
         })
             .then(response => response.json())
             .then(data => {
-                alert(data.message); // Hiện thông báo của Laravel (Thành công hoặc Lỗi)
-                e.target.value = null; // Reset ô input file
-                fetchUsers(); // Tải lại bảng để thấy sinh viên mới import
+                Swal.fire('Thành công!', data.message, 'success');
+                e.target.value = null;
+                fetchUsers();
             })
             .catch(error => {
                 console.error("Lỗi khi import:", error);
-                alert("Đã xảy ra lỗi không xác định khi import file.");
+                Swal.fire('Lỗi!', 'Đã xảy ra lỗi không xác định khi import file.', 'error');
                 e.target.value = null;
             });
     };
+
     const handleInputChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
     return (
-        <div className="container mt-4" style={{ maxWidth: "100%" }}>
-            <div className=" mb-4">
-                <h2>Quản lý Sinh viên</h2>
-
+        <div className="container-fluid py-2">
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <h3 className="fw-bold text-dark mb-0">Quản lý Sinh viên</h3>
             </div>
 
-            <div className="card shadow" >
-                <div className="card-body">
-                    {/* Thanh công cụ: Tìm kiếm & Thêm mới */}
-                    <div className="row mb-3">
-                        <div className="col-md-6">
-                            <input type="text" className="form-control" placeholder="Tìm theo tên, email, SĐT..."
-                                onChange={(e) => setSearch(e.target.value)} />
+            <div className="card shadow-sm border-0" style={{ borderRadius: '16px' }}>
+                <div className="card-body p-4">
+                    <div className="row mb-4 align-items-center">
+                        <div className="col-md-5">
+                            <input type="text" className="form-control bg-light border-0 py-2" placeholder="🔍 Tìm theo tên, email, SĐT..."
+                                onChange={(e) => setSearch(e.target.value)} style={{ borderRadius: '8px' }}/>
                         </div>
-                        {/* --- KHU VỰC NÚT IMPORT VÀ Ô CHỌN FILE ẨN --- */}
-                        <div className="col-md-6 text-end">
-                            {/* Ô input file bị ẩn (d-none) để phục vụ cho nút Import Excel */}
+                        <div className="col-md-7 text-end">
                             <input type="file" id="importFile" className="d-none" accept=".xlsx, .xls, .csv"
                                 onChange={handleImportExcel} />
-
-                            {/* Nút Import Excel thật (màu xanh lá): khi bấm vào nó sẽ kích hoạt nút chọn file ẩn ở trên */}
-                            <button className="btn btn-success me-2" onClick={() => document.getElementById('importFile').click()}>
-                                Import Excel
+                            <button className="btn btn-outline-success me-2 fw-medium py-2 px-3" style={{ borderRadius: '8px' }} onClick={() => document.getElementById('importFile').click()}>
+                                Tải lên Excel
                             </button>
-
-                            {/* Nút Thêm sinh viên cũ giữ nguyên */}
-                            <button className="btn btn-primary" onClick={() => {
+                            <button className="btn btn-primary fw-medium py-2 px-3" style={{ borderRadius: '8px', backgroundColor: '#2563eb', border: 'none' }} onClick={() => {
                                 setModalMode('add');
                                 setFormData({ name: '', email: '', phone: '', class: '' });
                                 setShowModal(true);
                             }}>+ Thêm Sinh viên</button>
                         </div>
                     </div>
+
                     {showModal && (
-                        <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                            <div className="modal-dialog">
-                                <div className="modal-content">
-                                    <div className={`modal-header ${modalMode === 'edit' ? 'bg-warning' : 'bg-primary'} text-white`}>
-                                        {/* Đổi tiêu đề động dựa trên chế độ add/edit */}
-                                        <h5 className="modal-title">
+                        <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(2px)' }}>
+                            <div className="modal-dialog modal-dialog-centered">
+                                <div className="modal-content border-0 shadow" style={{ borderRadius: '16px' }}>
+                                    <div className="modal-header border-bottom-0 pb-0">
+                                        <h5 className="modal-title fw-bold text-dark">
                                             {modalMode === 'edit' ? 'Sửa Thông Tin Sinh Viên' : 'Thêm Sinh Viên Mới'}
                                         </h5>
-                                        <button type="button" className="btn-close btn-close-white" onClick={() => setShowModal(false)}></button>
+                                        <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
                                     </div>
 
-                                    {/* Gắn hàm handleSubmit hợp nhất vào form */}
                                     <form onSubmit={handleSubmit}>
-                                        <div className="modal-body">
-                                            {/* ... các ô input bên trong giữ nguyên ... */}
+                                        <div className="modal-body pt-4">
                                             <div className="mb-3">
-                                                <label className="form-label fw-bold">Họ và Tên <span className="text-danger">*</span></label>
-                                                <input type="text" className="form-control" name="name"
+                                                <label className="form-label text-muted fw-medium" style={{ fontSize: '14px' }}>Họ và Tên <span className="text-danger">*</span></label>
+                                                <input type="text" className="form-control bg-light border-0" name="name"
                                                     value={formData.name} onChange={handleInputChange} required />
                                             </div>
                                             <div className="mb-3">
-                                                <label className="form-label fw-bold">Email <span className="text-danger">*</span></label>
-                                                <input type="email" className="form-control" name="email"
-                                                    value={formData.email} onChange={handleInputChange} required />
+                                                <label className="form-label text-muted fw-medium" style={{ fontSize: '14px' }}>Email <span className="text-danger">*</span></label>
+                                                <input type="email" className="form-control bg-light border-0" name="email"
+                                                    value={formData.email} onChange={handleInputChange} required disabled={modalMode === 'edit'} />
+                                                    {modalMode === 'edit' && <small className="text-muted">Không thể thay đổi email.</small>}
                                             </div>
-                                            <div className="mb-3">
-                                                <label className="form-label fw-bold">Lớp học</label>
-                                                <input type="text" className="form-control" name="class"
-                                                    value={formData.class} onChange={handleInputChange} placeholder="VD: 12A1, CNTT1..." />
-                                            </div>
-                                            <div className="mb-3">
-                                                <label className="form-label fw-bold">Số điện thoại</label>
-                                                <input type="text" className="form-control" name="phone"
-                                                    value={formData.phone} onChange={handleInputChange} />
+                                            <div className="row">
+                                                <div className="col-md-6 mb-3">
+                                                    <label className="form-label text-muted fw-medium" style={{ fontSize: '14px' }}>Lớp học</label>
+                                                    <input type="text" className="form-control bg-light border-0" name="class"
+                                                        value={formData.class} onChange={handleInputChange} placeholder="VD: 12A1" />
+                                                </div>
+                                                <div className="col-md-6 mb-3">
+                                                    <label className="form-label text-muted fw-medium" style={{ fontSize: '14px' }}>Số điện thoại</label>
+                                                    <input type="text" className="form-control bg-light border-0" name="phone"
+                                                        value={formData.phone} onChange={handleInputChange} />
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="modal-footer">
-                                            <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Hủy</button>
-                                            {/* Đổi chữ trên nút bấm động */}
-                                            <button type="submit" className={`btn ${modalMode === 'edit' ? 'btn-warning' : 'btn-success'}`}>
+                                        <div className="modal-footer border-top-0 pt-0">
+                                            <button type="button" className="btn btn-light px-4" style={{ borderRadius: '8px' }} onClick={() => setShowModal(false)}>Hủy</button>
+                                            <button type="submit" className="btn btn-primary px-4" style={{ borderRadius: '8px', backgroundColor: '#2563eb', border: 'none' }}>
                                                 {modalMode === 'edit' ? 'Cập Nhật' : 'Lưu Sinh Viên'}
                                             </button>
                                         </div>
@@ -238,37 +227,40 @@ export default function StudentManager() {
                             </div>
                         </div>
                     )}
-                    {/* Bảng dữ liệu */}
-                    <table className="table table-bordered table-hover align-middle">
-                        <thead className="table-dark text-center">
-                            <tr>
-                                <th>ID</th>
-                                <th>Họ và Tên</th>
-                                <th>Email</th>
-                                <th>Lớp học</th>
-                                <th>Số điện thoại</th>
-                                <th>Hành động</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {users.map(user => (
-                                <tr key={user.id}>
-                                    <td className="text-center">{user.id}</td>
-                                    <td className="fw-bold">{user.name}</td>
-                                    <td>{user.email}</td>
-                                    <td className="text-center">{user.class || 'N/A'}</td>
-                                    <td>{user.phone || 'N/A'}</td>
-                                    <td className="text-center">
-                                        <button className="btn btn-sm btn-warning me-2" onClick={() => handleEditClick(user)}>Sửa</button>
-                                        <button className="btn btn-sm btn-danger" onClick={() => handleDelete(user.id)}>Xóa</button>
-                                    </td>
+
+                    <div className="table-responsive">
+                        <table className="table table-hover align-middle mb-0">
+                            <thead className="table-light">
+                                <tr>
+                                    <th className="py-3 px-3 border-0 text-muted fw-semibold" style={{ fontSize: '13px', width: '60px' }}>ID</th>
+                                    <th className="py-3 px-3 border-0 text-muted fw-semibold" style={{ fontSize: '13px' }}>HỌ VÀ TÊN</th>
+                                    <th className="py-3 px-3 border-0 text-muted fw-semibold" style={{ fontSize: '13px' }}>EMAIL</th>
+                                    <th className="py-3 px-3 border-0 text-muted fw-semibold text-center" style={{ fontSize: '13px' }}>LỚP HỌC</th>
+                                    <th className="py-3 px-3 border-0 text-muted fw-semibold" style={{ fontSize: '13px' }}>SỐ ĐIỆN THOẠI</th>
+                                    <th className="py-3 px-3 border-0 text-muted fw-semibold text-end" style={{ fontSize: '13px' }}>HÀNH ĐỘNG</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {users.length === 0 ? (
+                                    <tr><td colSpan="6" className="text-center py-5 text-muted">Không tìm thấy sinh viên nào.</td></tr>
+                                ) : users.map(user => (
+                                    <tr key={user.id}>
+                                        <td className="px-3 py-3 border-bottom-0 border-top text-muted">{user.id}</td>
+                                        <td className="px-3 py-3 border-bottom-0 border-top fw-bold text-dark">{user.name}</td>
+                                        <td className="px-3 py-3 border-bottom-0 border-top text-muted">{user.email}</td>
+                                        <td className="px-3 py-3 border-bottom-0 border-top text-center"><span className="badge bg-secondary bg-opacity-10 text-secondary">{user.class || 'N/A'}</span></td>
+                                        <td className="px-3 py-3 border-bottom-0 border-top text-muted">{user.phone || 'Chưa cập nhật'}</td>
+                                        <td className="px-3 py-3 border-bottom-0 border-top text-end">
+                                            <button className="btn btn-sm btn-light text-primary me-2 fw-medium" onClick={() => handleEditClick(user)}>Sửa</button>
+                                            <button className="btn btn-sm btn-light text-danger fw-medium" onClick={() => handleDelete(user.id)}>Xóa</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
-
     );
 }

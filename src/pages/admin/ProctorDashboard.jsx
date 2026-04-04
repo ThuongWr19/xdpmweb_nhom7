@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaEye, FaSync, FaExclamationTriangle, FaBan, FaCheckCircle } from 'react-icons/fa';
+import Swal from 'sweetalert2';
+import { FaEye, FaSync, FaExclamationTriangle, FaBan, FaCheckCircle, FaSpinner } from 'react-icons/fa';
 
 export default function ProctorDashboard() {
     const [exams, setExams] = useState([]);
@@ -11,14 +12,12 @@ export default function ProctorDashboard() {
     const API_URL = import.meta.env.VITE_API_URL;
     const token = localStorage.getItem('token');
 
-    // 1. Lấy danh sách tất cả kỳ thi
     useEffect(() => {
         const fetchExams = async () => {
             try {
                 const res = await axios.get(`${API_URL}/exams`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                // Lọc ra các kỳ thi đang mở (is_active = 1)
                 const activeExams = res.data.filter(e => e.is_active);
                 setExams(activeExams);
             } catch (error) {
@@ -28,7 +27,6 @@ export default function ProctorDashboard() {
         fetchExams();
     }, [API_URL, token]);
 
-    // 2. Lấy danh sách giám sát sinh viên đang thi
     const fetchAttempts = async () => {
         if (!selectedExam) return;
         try {
@@ -41,7 +39,6 @@ export default function ProctorDashboard() {
         }
     };
 
-    // 3. Real-time Polling: Tự động refresh mỗi 5 giây khi đã chọn kỳ thi
     useEffect(() => {
         if (selectedExam) {
             setIsLoading(true);
@@ -49,44 +46,54 @@ export default function ProctorDashboard() {
             
             const intervalId = setInterval(() => {
                 fetchAttempts();
-            }, 5000); // 5000ms = 5 giây
+            }, 5000); 
             
-            return () => clearInterval(intervalId); // Cleanup khi đổi kỳ thi hoặc thoát trang
+            return () => clearInterval(intervalId); 
         } else {
             setAttempts([]);
         }
     }, [selectedExam]);
 
-    // 4. Nút bấm Thu bài
     const handleForceSubmit = async (attemptId, studentName) => {
-        if (window.confirm(`XÁC NHẬN: Bạn muốn đình chỉ và THU BÀI của sinh viên [ ${studentName} ] ngay lập tức?`)) {
+        const confirm = await Swal.fire({
+            title: 'ĐÌNH CHỈ THI?',
+            text: `XÁC NHẬN: Bạn muốn đình chỉ và THU BÀI của sinh viên [ ${studentName} ] ngay lập tức?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: 'Đình chỉ ngay',
+            cancelButtonText: 'Hủy'
+        });
+
+        if (confirm.isConfirmed) {
             try {
                 await axios.post(`${API_URL}/admin/exam-attempts/${attemptId}/force-submit`, {}, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                alert('Đã đình chỉ thành công!');
-                fetchAttempts(); // Refresh lại data ngay lập tức
+                Swal.fire('Thành công!', 'Đã đình chỉ và thu bài thành công.', 'success');
+                fetchAttempts(); 
             } catch (error) {
-                alert('Có lỗi xảy ra khi thực hiện lệnh thu bài!');
+                Swal.fire('Lỗi!', 'Có lỗi xảy ra khi thực hiện lệnh thu bài!', 'error');
                 console.error(error);
             }
         }
     };
 
     return (
-        <div className="container-fluid py-4">
-            <h3 className="fw-bold mb-4 d-flex align-items-center text-primary">
-                <FaEye className="me-2 fs-2" /> Hệ Thống Giám Sát Phòng Thi
+        <div className="container-fluid py-2">
+            <h3 className="fw-bold mb-4 d-flex align-items-center text-dark">
+                <FaEye className="me-2 text-primary" /> Hệ Thống Giám Sát
             </h3>
 
-            {/* Bộ lọc chọn kỳ thi */}
-            <div className="card shadow-sm border-0 mb-4" style={{ borderRadius: '12px' }}>
+            <div className="card shadow-sm border-0 mb-4" style={{ borderRadius: '16px' }}>
                 <div className="card-body p-4">
-                    <div className="row align-items-center">
-                        <div className="col-md-8">
-                            <label className="fw-bold text-dark mb-2">Chọn phòng thi / kỳ thi đang diễn ra:</label>
+                    <div className="row align-items-end g-3">
+                        <div className="col-md-9">
+                            <label className="form-label text-muted fw-medium small mb-2">CHỌN PHÒNG THI ĐANG DIỄN RA</label>
                             <select 
-                                className="form-select form-select-lg shadow-sm border-primary"
+                                className="form-select form-select-lg bg-light border-0 py-3 fs-6"
+                                style={{ borderRadius: '10px', boxShadow: 'none' }}
                                 value={selectedExam}
                                 onChange={(e) => setSelectedExam(e.target.value)}
                             >
@@ -98,61 +105,61 @@ export default function ProctorDashboard() {
                                 ))}
                             </select>
                         </div>
-                        <div className="col-md-4 text-end mt-4 mt-md-0">
-                            <button className="btn btn-outline-primary fw-bold shadow-sm" onClick={fetchAttempts} disabled={!selectedExam || isLoading}>
-                                <FaSync className={`me-2 ${isLoading ? 'fa-spin' : ''}`} /> Cập nhật tức thì
+                        <div className="col-md-3">
+                            <button className="btn btn-outline-primary w-100 py-3 fw-medium d-flex justify-content-center align-items-center gap-2" 
+                                    style={{ borderRadius: '10px' }}
+                                    onClick={fetchAttempts} disabled={!selectedExam || isLoading}>
+                                <FaSync className={`${isLoading ? 'fa-spin' : ''}`} /> Làm mới tức thì
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Bảng theo dõi sinh viên */}
             {selectedExam && (
-                <div className="card shadow border-0" style={{ borderRadius: '12px' }}>
-                    <div className="card-header bg-dark text-white py-3" style={{ borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
-                        <h5 className="mb-0 fw-bold">Trạng thái sinh viên trong phòng</h5>
+                <div className="card shadow-sm border-0" style={{ borderRadius: '16px', overflow: 'hidden' }}>
+                    <div className="card-header bg-white py-3 border-bottom px-4">
+                        <h5 className="mb-0 fw-bold" style={{ color: '#0f172a' }}>Trạng thái sinh viên trong phòng</h5>
                     </div>
                     <div className="card-body p-0">
                         <div className="table-responsive">
                             <table className="table table-hover align-middle mb-0">
                                 <thead className="table-light">
                                     <tr>
-                                        <th className="px-4 py-3">Họ và tên / Email</th>
-                                        <th className="py-3">Lớp</th>
-                                        <th className="py-3">Giờ bắt đầu</th>
-                                        <th className="py-3 text-center">Trạng thái</th>
-                                        <th className="py-3 text-center">Cảnh báo vi phạm</th>
-                                        <th className="py-3 text-center">Hành động</th>
+                                        <th className="py-3 px-4 border-0 text-muted fw-semibold" style={{ fontSize: '13px' }}>HỌ VÀ TÊN / EMAIL</th>
+                                        <th className="py-3 px-3 border-0 text-muted fw-semibold" style={{ fontSize: '13px' }}>LỚP</th>
+                                        <th className="py-3 px-3 border-0 text-muted fw-semibold" style={{ fontSize: '13px' }}>GIỜ VÀO THI</th>
+                                        <th className="py-3 px-3 border-0 text-muted fw-semibold text-center" style={{ fontSize: '13px' }}>TRẠNG THÁI</th>
+                                        <th className="py-3 px-3 border-0 text-muted fw-semibold text-center" style={{ fontSize: '13px' }}>CẢNH BÁO VI PHẠM</th>
+                                        <th className="py-3 px-4 border-0 text-muted fw-semibold text-end" style={{ fontSize: '13px' }}>HÀNH ĐỘNG</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {attempts.length === 0 ? (
                                         <tr>
-                                            <td colSpan="6" className="text-center py-5 text-muted fw-bold">
+                                            <td colSpan="6" className="text-center py-5 text-muted">
                                                 Chưa có sinh viên nào bắt đầu tham gia kỳ thi này.
                                             </td>
                                         </tr>
                                     ) : (
                                         attempts.map(attempt => (
-                                            // Highlight nền vàng nhạt nếu vi phạm từ 2 lần trở lên
-                                            <tr key={attempt.id} className={attempt.cheat_count >= 2 && attempt.status === 'in_progress' ? 'table-warning' : ''}>
-                                                <td className="px-4 py-3">
-                                                    <div className="fw-bold text-dark fs-6">{attempt.user?.name || 'Unknown'}</div>
+                                            <tr key={attempt.id} style={{ backgroundColor: attempt.cheat_count >= 2 && attempt.status === 'in_progress' ? '#fffbeb' : 'transparent' }}>
+                                                <td className="px-4 py-3 border-bottom-0 border-top">
+                                                    <div className="fw-bold text-dark">{attempt.user?.name || 'Unknown'}</div>
                                                     <div className="text-muted small">{attempt.user?.email}</div>
                                                 </td>
-                                                <td className="fw-medium">{attempt.user?.class || 'N/A'}</td>
-                                                <td>{new Date(attempt.started_at).toLocaleTimeString('vi-VN')}</td>
+                                                <td className="px-3 py-3 border-bottom-0 border-top text-dark fw-medium">{attempt.user?.class || 'N/A'}</td>
+                                                <td className="px-3 py-3 border-bottom-0 border-top text-muted">{new Date(attempt.started_at).toLocaleTimeString('vi-VN')}</td>
                                                 
-                                                <td className="text-center">
-                                                    {attempt.status === 'in_progress' && <span className="badge bg-primary px-3 py-2 rounded-pill">Đang làm bài</span>}
-                                                    {attempt.status === 'completed' && <span className="badge bg-success px-3 py-2 rounded-pill"><FaCheckCircle className="me-1"/> Đã nộp bài</span>}
-                                                    {attempt.status === 'forced_submitted' && <span className="badge bg-danger px-3 py-2 rounded-pill"><FaBan className="me-1"/> Bị đình chỉ</span>}
+                                                <td className="px-3 py-3 border-bottom-0 border-top text-center">
+                                                    {attempt.status === 'in_progress' && <span className="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill"><FaSpinner className="fa-spin me-1"/> Đang làm bài</span>}
+                                                    {attempt.status === 'completed' && <span className="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill"><FaCheckCircle className="me-1"/> Đã nộp bài</span>}
+                                                    {attempt.status === 'forced_submitted' && <span className="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill"><FaBan className="me-1"/> Bị đình chỉ</span>}
                                                 </td>
                                                 
-                                                <td className="text-center">
+                                                <td className="px-3 py-3 border-bottom-0 border-top text-center">
                                                     {attempt.cheat_count > 0 ? (
-                                                        <span className={`badge ${attempt.cheat_count >= 3 ? 'bg-danger' : 'bg-warning text-dark'} fs-6 px-3 py-2 rounded-pill shadow-sm`}>
+                                                        <span className={`badge ${attempt.cheat_count >= 3 ? 'bg-danger text-white' : 'bg-warning text-dark'} px-3 py-2 rounded-pill`}>
                                                             <FaExclamationTriangle className="me-1" /> {attempt.cheat_count} lần
                                                         </span>
                                                     ) : (
@@ -160,9 +167,10 @@ export default function ProctorDashboard() {
                                                     )}
                                                 </td>
                                                 
-                                                <td className="text-center">
+                                                <td className="px-4 py-3 border-bottom-0 border-top text-end">
                                                     <button 
-                                                        className="btn btn-sm btn-danger fw-bold rounded-pill px-3 shadow-sm"
+                                                        className="btn btn-sm btn-danger fw-medium px-3"
+                                                        style={{ borderRadius: '8px' }}
                                                         onClick={() => handleForceSubmit(attempt.id, attempt.user?.name)}
                                                         disabled={attempt.status !== 'in_progress'}
                                                     >

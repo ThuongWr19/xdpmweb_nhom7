@@ -10,6 +10,8 @@ import ReportDashboard from './pages/admin/ReportDashboard';
 import ProctorDashboard from './pages/admin/ProctorDashboard';
 import NotificationManager from './pages/admin/NotificationManager';
 import SystemSettings from './pages/admin/SystemSettings';
+import AdminProfile from './pages/admin/AdminProfile';
+import StudentProfile from './pages/student/StudentProfile';
 
 const ReportDashboardWrapper = () => {
     const { examId } = useParams();
@@ -27,6 +29,7 @@ function App() {
         <Route path="/student" element={<StudentHome />} />
         <Route path="/student/exam/:id/do" element={<DoingExam />} />
         <Route path="/student/home" element={<StudentHome />} />
+        <Route path="/student/profile" element={<StudentProfile />} />
 
         {/* --- KHU VỰC CỦA ADMIN/CTSV --- */}
         <Route path="/admin" element={<AdminLayout />}>
@@ -39,7 +42,8 @@ function App() {
             <Route path="notifications" element={<NotificationManager />} />
             <Route path="proctoring" element={<ProctorDashboard />} />
             <Route path="dashboard" element={<ReportDashboard />} />
-            <Route path="settings" element={<SystemSettings />} />
+            {/* <Route path="settings" element={<SystemSettings />} /> */}
+            <Route path="profile" element={<AdminProfile />} />
         </Route>
       </Routes>
     </BrowserRouter>

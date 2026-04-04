@@ -2,19 +2,17 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     FaClock, FaBook, FaLock, FaPlayCircle, 
-    FaSignOutAlt, FaHistory, FaListAlt, FaCheckCircle, FaUserGraduate, FaBell 
+    FaSignOutAlt, FaHistory, FaListAlt, FaCheckCircle, FaUserGraduate, FaBell, FaUserCircle 
 } from 'react-icons/fa';
 import axios from 'axios';
 
 export default function StudentHome() {
-    // --- KHAI BÁO STATE ---
     const [exams, setExams] = useState([]);
     const [history, setHistory] = useState([]);
     const [notifications, setNotifications] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('available'); // 'available' hoặc 'history'
+    const [activeTab, setActiveTab] = useState('available'); 
     
-    // State cho Modal Mật khẩu
     const [showModal, setShowModal] = useState(false);
     const [selectedExam, setSelectedExam] = useState(null);
     const [passwordInput, setPasswordInput] = useState('');
@@ -23,11 +21,8 @@ export default function StudentHome() {
     const navigate = useNavigate();
     const API_URL = import.meta.env.VITE_API_URL;
     const token = localStorage.getItem('token');
-    
-    // Lấy thông tin user từ localStorage (nếu có lưu lúc đăng nhập)
     const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-    // --- CÁC HÀM XỬ LÝ (LOGIC) ---
     useEffect(() => {
         if (!token) {
             navigate('/login');
@@ -36,7 +31,6 @@ export default function StudentHome() {
 
         const fetchNotices = async () => {
             try {
-                // Sửa lại đường dẫn API cho đồng nhất với biến API_URL
                 const response = await axios.get(`${API_URL}/notifications`); 
                 setNotifications(response.data);
             } catch (error) {
@@ -50,7 +44,6 @@ export default function StudentHome() {
 
     const fetchData = async () => {
         setIsLoading(true);
-        // Tải song song cả danh sách kỳ thi và lịch sử
         await Promise.all([fetchExams(), fetchHistory()]);
         setIsLoading(false);
     };
@@ -121,25 +114,41 @@ export default function StudentHome() {
         }
     };
 
-    // --- GIAO DIỆN (UI) ---
     return (
-        <div className="min-vh-100" style={{ backgroundColor: '#f4f6f9' }}>
+        <div className="min-vh-100" style={{ backgroundColor: '#f8fafc' }}>
             {/* Navbar */}
-            <nav className="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm mb-4">
+            <nav className="navbar navbar-expand-lg bg-white shadow-sm mb-4 py-3 border-bottom">
                 <div className="container">
-                    <span className="navbar-brand fw-bold d-flex align-items-center gap-2">
-                        <FaUserGraduate className="fs-4" /> HỆ THỐNG THI TRỰC TUYẾN
+                    <span className="navbar-brand fw-bold d-flex align-items-center gap-2" style={{ color: '#2563eb' }}>
+                        <div className="bg-primary bg-opacity-10 p-2 rounded-circle d-flex align-items-center justify-content-center">
+                            <FaUserGraduate className="fs-5" />
+                        </div>
+                        CỔNG THI SINH VIÊN
                     </span>
                     <div className="d-flex align-items-center gap-3">
-                        <div className="text-white text-end d-none d-sm-block">
-                            <small className="d-block opacity-75">Sinh viên</small>
-                            <span className="fw-bold">{user.name || 'Người dùng'}</span>
+                        {/* NÚT TÀI KHOẢN MỚI THÊM */}
+                        <button 
+                            onClick={() => navigate('/student/profile')} 
+                            className="btn btn-light text-primary d-flex align-items-center gap-2 fw-medium px-3 py-2 border-0"
+                            style={{ borderRadius: '8px' }}
+                        >
+                            <FaUserCircle /> Tài khoản
+                        </button>
+                        
+                        <div className="border-start ms-2 me-2 d-none d-sm-block" style={{ height: '24px' }}></div>
+                        
+                        <div className="text-end d-none d-sm-block">
+                            <small className="d-block text-muted fw-medium" style={{ fontSize: '12px' }}>Xin chào,</small>
+                            <span className="fw-bold text-dark">{user.name || 'Học viên'}</span>
                         </div>
+                        
                         <button 
                             onClick={handleLogout} 
-                            className="btn btn-danger btn-sm d-flex align-items-center gap-2 fw-bold shadow-sm"
+                            className="btn btn-light text-danger d-flex align-items-center justify-content-center fw-medium border-0"
+                            style={{ borderRadius: '8px', width: '40px', height: '40px' }}
+                            title="Đăng xuất"
                         >
-                            <FaSignOutAlt /> Đăng xuất
+                            <FaSignOutAlt />
                         </button>
                     </div>
                 </div>
@@ -147,31 +156,30 @@ export default function StudentHome() {
 
             <div className="container pb-5">
                 <div className="row g-4">
-                    
-                    {/* CỘT TRÁI: DANH SÁCH BÀI THI / LỊCH SỬ (Chiếm 8/12 màn hình) */}
+                    {/* CỘT TRÁI: DANH SÁCH BÀI THI / LỊCH SỬ */}
                     <div className="col-lg-8">
-                        
-                        {/* Tabs Điều hướng */}
-                        <div className="bg-white p-2 rounded-pill shadow-sm d-inline-flex mb-4">
+                        {/* Segmented Control Tabs */}
+                        <div className="bg-light p-1 shadow-sm d-inline-flex mb-4 align-items-center" style={{ borderRadius: '12px', border: '1px solid #e2e8f0' }}>
                             <button 
                                 onClick={() => setActiveTab('available')}
-                                className={`btn rounded-pill px-4 py-2 fw-bold d-flex align-items-center gap-2 transition-all ${activeTab === 'available' ? 'btn-primary shadow' : 'btn-light text-muted border-0'}`}
+                                className={`btn border-0 px-4 py-2 fw-medium d-flex align-items-center gap-2 transition-all ${activeTab === 'available' ? 'bg-white shadow-sm text-primary' : 'bg-transparent text-muted'}`}
+                                style={{ borderRadius: '10px' }}
                             >
                                 <FaListAlt /> Kỳ thi hiện có
                             </button>
                             <button 
                                 onClick={() => setActiveTab('history')}
-                                className={`btn rounded-pill px-4 py-2 fw-bold d-flex align-items-center gap-2 transition-all ms-2 ${activeTab === 'history' ? 'btn-primary shadow' : 'btn-light text-muted border-0'}`}
+                                className={`btn border-0 px-4 py-2 fw-medium d-flex align-items-center gap-2 transition-all ${activeTab === 'history' ? 'bg-white shadow-sm text-primary' : 'bg-transparent text-muted'}`}
+                                style={{ borderRadius: '10px' }}
                             >
                                 <FaHistory /> Lịch sử làm bài
                             </button>
                         </div>
 
-                        {/* Nội dung Tabs */}
                         {isLoading ? (
                             <div className="text-center py-5">
-                                <span className="spinner-border text-primary fs-4"></span>
-                                <p className="mt-3 text-muted fw-bold">Đang tải dữ liệu...</p>
+                                <span className="spinner-border text-primary fs-4" style={{ borderWidth: '3px' }}></span>
+                                <p className="mt-3 text-muted fw-medium">Đang tải dữ liệu...</p>
                             </div>
                         ) : (
                             <div className="row g-4">
@@ -179,10 +187,12 @@ export default function StudentHome() {
                                 {activeTab === 'available' && (
                                     exams.length === 0 ? (
                                         <div className="col-12 text-center py-5">
-                                            <div className="alert alert-info border-0 shadow-sm d-inline-block px-5 py-4 rounded-4 bg-white">
-                                                <FaBook className="fs-1 text-info mb-3 d-block mx-auto" />
-                                                <h5 className="fw-bold text-dark">Chưa có kỳ thi nào</h5>
-                                                <p className="mb-0 text-muted">Hiện tại không có kỳ thi nào đang mở dành cho bạn!</p>
+                                            <div className="alert bg-white border-0 shadow-sm d-inline-block px-5 py-5 text-center" style={{ borderRadius: '20px' }}>
+                                                <div className="bg-primary bg-opacity-10 rounded-circle d-inline-flex p-4 mb-3">
+                                                    <FaBook className="fs-1 text-primary opacity-75" />
+                                                </div>
+                                                <h5 className="fw-bold text-dark mb-2">Chưa có kỳ thi nào</h5>
+                                                <p className="mb-0 text-muted">Hiện tại không có bài thi nào đang mở dành cho lớp của bạn.</p>
                                             </div>
                                         </div>
                                     ) : (
@@ -190,27 +200,36 @@ export default function StudentHome() {
                                             <div className="col-md-6" key={exam.id}>
                                                 <div className="card h-100 shadow-sm border-0 position-relative hover-card" style={{ borderRadius: '16px' }}>
                                                     {exam.has_password && (
-                                                        <span className="position-absolute top-0 end-0 badge bg-danger m-3 p-2 shadow-sm rounded-pill" title="Cần mật khẩu">
-                                                            <FaLock className="me-1" /> Có khóa
+                                                        <span className="position-absolute top-0 end-0 badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 m-3 px-2 py-1 rounded d-flex align-items-center" title="Cần mật khẩu">
+                                                            <FaLock className="me-1 small" /> Có khóa
                                                         </span>
                                                     )}
                                                     <div className="card-body p-4 d-flex flex-column">
-                                                        <h5 className="card-title fw-bold text-dark mb-3">{exam.title}</h5>
+                                                        <h5 className="card-title fw-bold text-dark mb-4 pe-4" style={{ lineHeight: '1.4' }}>{exam.title}</h5>
                                                         
                                                         <div className="mb-4 flex-grow-1">
-                                                            <p className="card-text mb-2 d-flex align-items-center text-muted">
-                                                                <FaBook className="me-2 text-primary" /> Môn thi: <strong className="ms-1 text-dark">{exam.subject}</strong>
-                                                            </p>
-                                                            <p className="card-text mb-2 d-flex align-items-center text-muted">
-                                                                <FaClock className="me-2 text-warning" /> Thời gian: <strong className="ms-1 text-dark">{exam.duration} phút</strong>
-                                                            </p>
-                                                            <p className="card-text mb-0 d-flex align-items-center text-muted">
-                                                                <FaListAlt className="me-2 text-info" /> Số lượng: <strong className="ms-1 text-dark">{exam.total_questions} câu</strong>
-                                                            </p>
+                                                            <div className="d-flex align-items-center mb-3">
+                                                                <div className="bg-light p-2 rounded me-3 text-primary"><FaBook /></div>
+                                                                <div>
+                                                                    <div className="small text-muted fw-medium" style={{ fontSize: '12px' }}>Môn thi</div>
+                                                                    <div className="fw-semibold text-dark">{exam.subject}</div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="d-flex gap-4">
+                                                                <div>
+                                                                    <div className="small text-muted fw-medium d-flex align-items-center gap-1 mb-1" style={{ fontSize: '12px' }}><FaClock className="text-warning"/> Thời gian</div>
+                                                                    <div className="fw-semibold text-dark">{exam.duration} phút</div>
+                                                                </div>
+                                                                <div>
+                                                                    <div className="small text-muted fw-medium d-flex align-items-center gap-1 mb-1" style={{ fontSize: '12px' }}><FaListAlt className="text-info"/> Số câu hỏi</div>
+                                                                    <div className="fw-semibold text-dark">{exam.total_questions} câu</div>
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                         
                                                         <button 
-                                                            className="btn btn-primary w-100 fw-bold py-2 d-flex align-items-center justify-content-center gap-2 shadow-sm rounded-pill mt-auto"
+                                                            className="btn btn-primary w-100 fw-medium py-2 d-flex align-items-center justify-content-center gap-2 border-0 mt-auto hover-lift"
+                                                            style={{ borderRadius: '10px', backgroundColor: '#2563eb' }}
                                                             onClick={() => handleJoinExam(exam)}
                                                         >
                                                             <FaPlayCircle className="fs-5" /> VÀO THI NGAY
@@ -226,40 +245,43 @@ export default function StudentHome() {
                                 {activeTab === 'history' && (
                                     history.length === 0 ? (
                                         <div className="col-12 text-center py-5">
-                                            <div className="alert alert-light border-0 shadow-sm d-inline-block px-5 py-4 rounded-4 bg-white">
-                                                <FaHistory className="fs-1 text-secondary mb-3 d-block mx-auto" />
-                                                <h5 className="fw-bold text-dark">Chưa có lịch sử</h5>
-                                                <p className="mb-0 text-muted">Bạn chưa hoàn thành bài thi nào.</p>
+                                            <div className="alert bg-white border-0 shadow-sm d-inline-block px-5 py-5 text-center" style={{ borderRadius: '20px' }}>
+                                                <div className="bg-secondary bg-opacity-10 rounded-circle d-inline-flex p-4 mb-3">
+                                                    <FaHistory className="fs-1 text-secondary opacity-75" />
+                                                </div>
+                                                <h5 className="fw-bold text-dark mb-2">Chưa có lịch sử</h5>
+                                                <p className="mb-0 text-muted">Bạn chưa hoàn thành bài thi nào trên hệ thống.</p>
                                             </div>
                                         </div>
                                     ) : (
                                         history.map(item => (
                                             <div className="col-md-6" key={item.id}>
-                                                <div className="card h-100 shadow-sm border-0 border-start border-success border-4 hover-card" style={{ borderRadius: '16px' }}>
+                                                <div className="card h-100 shadow-sm border-0 hover-card" style={{ borderRadius: '16px' }}>
                                                     <div className="card-body p-4 d-flex flex-column">
-                                                        <div className="d-flex justify-content-between align-items-start mb-3">
-                                                            <h5 className="fw-bold mb-0 text-dark">{item.exam_title || 'Bài thi'}</h5>
-                                                            <span className="badge bg-success bg-opacity-10 text-success border border-success px-2 py-1 rounded-pill">
-                                                                <FaCheckCircle className="me-1"/> Đã nộp
+                                                        <div className="d-flex justify-content-between align-items-start mb-4">
+                                                            <h6 className="fw-bold mb-0 text-dark" style={{ lineHeight: '1.4' }}>{item.exam_title || 'Bài thi'}</h6>
+                                                            <span className="badge bg-success bg-opacity-10 text-success px-2 py-1 rounded d-flex align-items-center gap-1">
+                                                                <FaCheckCircle/> Đã nộp
                                                             </span>
                                                         </div>
                                                         
-                                                        <div className="row text-center g-2 mb-3 flex-grow-1">
+                                                        <div className="row text-center g-3 mb-4 flex-grow-1">
                                                             <div className="col-6">
-                                                                <div className="bg-light p-3 rounded-3 border h-100">
-                                                                    <small className="text-muted d-block fw-bold mb-1">Điểm số</small>
-                                                                    <strong className="text-primary fs-4">{item.score}/10</strong>
+                                                                <div className="bg-light py-3 px-2 rounded h-100" style={{ border: '1px solid #f1f5f9' }}>
+                                                                    <small className="text-muted d-block fw-medium mb-1" style={{ fontSize: '13px' }}>Điểm số</small>
+                                                                    <strong className="text-primary fs-3 fw-bold">{item.score}<span className="fs-6 text-muted fw-normal">/10</span></strong>
                                                                 </div>
                                                             </div>
                                                             <div className="col-6">
-                                                                <div className="bg-light p-3 rounded-3 border h-100">
-                                                                    <small className="text-muted d-block fw-bold mb-1">Số câu đúng</small>
-                                                                    <strong className="text-success fs-4">{item.correct_answers}/{item.total_questions || '-'}</strong>
+                                                                <div className="bg-light py-3 px-2 rounded h-100" style={{ border: '1px solid #f1f5f9' }}>
+                                                                    <small className="text-muted d-block fw-medium mb-1" style={{ fontSize: '13px' }}>Số câu đúng</small>
+                                                                    <strong className="text-success fs-3 fw-bold">{item.correct_answers}<span className="fs-6 text-muted fw-normal">/{item.total_questions || '-'}</span></strong>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div className="text-muted small d-flex align-items-center justify-content-end mt-auto">
-                                                            <FaClock className="me-1" /> Nộp lúc: {new Date(item.completed_at || item.created_at).toLocaleString('vi-VN')}
+                                                        <div className="text-muted d-flex align-items-center justify-content-between mt-auto pt-3 border-top" style={{ fontSize: '13px' }}>
+                                                            <span className="fw-medium">Thời gian nộp:</span>
+                                                            <span className="d-flex align-items-center gap-1"><FaClock /> {new Date(item.completed_at || item.created_at).toLocaleString('vi-VN')}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -271,32 +293,31 @@ export default function StudentHome() {
                         )}
                     </div>
 
-                    {/* CỘT PHẢI: BẢNG TIN / THÔNG BÁO (Chiếm 4/12 màn hình) */}
+                    {/* CỘT PHẢI: BẢNG TIN / THÔNG BÁO */}
                     <div className="col-lg-4">
                         <div className="card shadow-sm border-0 sticky-top" style={{ borderRadius: '16px', top: '20px', zIndex: 10 }}>
-                            <div className="card-header bg-white border-bottom-0 pt-4 pb-2">
-                                <h5 className="card-title fw-bold text-dark d-flex align-items-center mb-0">
-                                    <FaBell className="me-2 text-warning" /> Thông báo từ CTSV
-                                </h5>
+                            <div className="card-header bg-white border-bottom-0 pt-4 pb-2 px-4">
+                                <h6 className="card-title fw-bold text-dark d-flex align-items-center mb-0 text-uppercase" style={{ letterSpacing: '0.5px' }}>
+                                    <FaBell className="me-2 text-warning fs-5" /> Thông báo từ CTSV
+                                </h6>
                             </div>
-                            <div className="card-body p-4" style={{ maxHeight: 'calc(100vh - 120px)', overflowY: 'auto' }}>
+                            <div className="card-body p-4 pt-2" style={{ maxHeight: 'calc(100vh - 120px)', overflowY: 'auto' }}>
                                 {notifications.length > 0 ? (
                                     notifications.map((noti) => (
-                                        <div key={noti.id} className="alert alert-light border shadow-sm mb-3" style={{ borderRadius: '12px', backgroundColor: '#fff' }}>
-                                            <div className="fw-bold text-primary mb-2 fs-6">{noti.title}</div>
-                                            <div className="text-muted small mb-2" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>
+                                        <div key={noti.id} className="p-3 mb-3" style={{ backgroundColor: '#f8fafc', borderRadius: '12px', borderLeft: '3px solid #3b82f6' }}>
+                                            <div className="fw-bold text-dark mb-1" style={{ fontSize: '15px' }}>{noti.title}</div>
+                                            <div className="text-secondary mb-2" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.5', fontSize: '14px' }}>
                                                 {noti.content}
                                             </div>
-                                            <div className="text-secondary d-flex align-items-center mt-2 border-top pt-2" style={{ fontSize: '0.8rem' }}>
-                                                <FaClock className="me-1"/> 
-                                                Ngày đăng: {new Date(noti.created_at).toLocaleDateString('vi-VN')}
+                                            <div className="text-muted d-flex align-items-center mt-2 fw-medium" style={{ fontSize: '12px' }}>
+                                                <FaClock className="me-1 opacity-75"/> {new Date(noti.created_at).toLocaleDateString('vi-VN')}
                                             </div>
                                         </div>
                                     ))
                                 ) : (
                                     <div className="text-center text-muted py-5">
-                                        <FaBell className="fs-1 text-light mb-2 d-block mx-auto" />
-                                        Chưa có thông báo mới.
+                                        <div className="bg-light rounded-circle d-inline-flex p-3 mb-2"><FaBell className="fs-3 text-secondary opacity-50" /></div>
+                                        <p className="mb-0 small fw-medium">Chưa có thông báo mới.</p>
                                     </div>
                                 )}
                             </div>
@@ -306,33 +327,35 @@ export default function StudentHome() {
                 </div>
             </div>
 
-            {/* Modal Nhập Mật Khẩu */}
+            {/* Modal Nhập Mật Khẩu tinh tế hơn */}
             {showModal && (
-                <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1050 }}>
-                    <div className="modal-dialog modal-dialog-centered">
-                        <div className="modal-content border-0 shadow-lg rounded-4">
+                <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(3px)', zIndex: 1050 }}>
+                    <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: '400px' }}>
+                        <div className="modal-content border-0 shadow" style={{ borderRadius: '20px' }}>
                             <form onSubmit={handlePasswordSubmit}>
-                                <div className="modal-header bg-danger text-white border-0 rounded-top-4">
-                                    <h5 className="modal-title fw-bold d-flex align-items-center gap-2"><FaLock/> Yêu cầu Mật khẩu</h5>
-                                    <button type="button" className="btn-close btn-close-white" onClick={() => setShowModal(false)}></button>
-                                </div>
-                                <div className="modal-body p-4 text-center">
-                                    <p className="text-muted mb-4">Kỳ thi <strong className="text-dark">{selectedExam?.title}</strong> yêu cầu mật khẩu để truy cập.</p>
+                                <div className="modal-body p-5 text-center">
+                                    <div className="bg-danger bg-opacity-10 text-danger rounded-circle d-inline-flex p-3 mb-3">
+                                        <FaLock className="fs-3" />
+                                    </div>
+                                    <h5 className="fw-bold text-dark mb-2">Yêu cầu Mật khẩu</h5>
+                                    <p className="text-muted small mb-4">Kỳ thi <strong className="text-dark">{selectedExam?.title}</strong> yêu cầu mật khẩu để truy cập.</p>
                                     
                                     <input 
                                         type="password" 
-                                        className={`form-control form-control-lg text-center bg-light ${errorMsg ? 'is-invalid' : ''}`}
-                                        placeholder="Nhập mật khẩu phòng thi..." 
+                                        className={`form-control form-control-lg text-center bg-light border-0 py-3 ${errorMsg ? 'is-invalid' : ''}`}
+                                        style={{ borderRadius: '12px', fontSize: '16px', letterSpacing: '2px' }}
+                                        placeholder="••••••••" 
                                         value={passwordInput} 
                                         onChange={(e) => setPasswordInput(e.target.value)}
                                         required 
                                         autoFocus
                                     />
-                                    {errorMsg && <div className="invalid-feedback mt-2 fw-bold">{errorMsg}</div>}
-                                </div>
-                                <div className="modal-footer border-0 justify-content-center pb-4 pt-0">
-                                    <button type="button" className="btn btn-light px-4 fw-bold rounded-pill" onClick={() => setShowModal(false)}>Hủy bỏ</button>
-                                    <button type="submit" className="btn btn-danger px-5 fw-bold shadow-sm rounded-pill">Xác nhận & Vào thi</button>
+                                    {errorMsg && <div className="invalid-feedback mt-2 fw-medium">{errorMsg}</div>}
+                                    
+                                    <div className="d-flex gap-2 mt-4 pt-2">
+                                        <button type="button" className="btn btn-light flex-fill fw-medium py-2" style={{ borderRadius: '10px' }} onClick={() => setShowModal(false)}>Hủy bỏ</button>
+                                        <button type="submit" className="btn btn-primary flex-fill fw-medium py-2 border-0" style={{ borderRadius: '10px', backgroundColor: '#2563eb' }}>Vào thi</button>
+                                    </div>
                                 </div>
                             </form>
                         </div>
@@ -340,26 +363,14 @@ export default function StudentHome() {
                 </div>
             )}
             
-            {/* CSS Tùy chỉnh trực tiếp cho trang này */}
             <style>{`
-                .hover-card { 
-                    transition: all 0.25s ease-in-out; 
-                }
-                .hover-card:hover { 
-                    transform: translateY(-6px); 
-                    box-shadow: 0 12px 24px rgba(0,0,0,0.1) !important; 
-                }
-                /* Tùy chỉnh thanh cuộn cho cột thông báo */
-                .card-body::-webkit-scrollbar {
-                    width: 6px;
-                }
-                .card-body::-webkit-scrollbar-thumb {
-                    background-color: #cbd5e1;
-                    border-radius: 10px;
-                }
-                .card-body::-webkit-scrollbar-track {
-                    background: transparent;
-                }
+                .hover-card { transition: all 0.2s ease-in-out; }
+                .hover-card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important; }
+                .hover-lift { transition: transform 0.1s; }
+                .hover-lift:active { transform: scale(0.98); }
+                .card-body::-webkit-scrollbar { width: 4px; }
+                .card-body::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+                .card-body::-webkit-scrollbar-track { background: transparent; }
             `}</style>
         </div>
     );
